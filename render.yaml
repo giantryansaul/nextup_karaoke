@@ -1,0 +1,36 @@
+services:
+  - type: web
+    name: nextup-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install uv && uv sync
+    startCommand: uv run uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: nextup-redis
+          property: connectionString
+      - key: FRONTEND_URL
+        value: https://nextup-karaoke.onrender.com
+
+  - type: web
+    name: nextup-karaoke
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://nextup-backend.onrender.com
+      - key: VITE_APP_URL
+        value: https://nextup-karaoke.onrender.com
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+databases:
+  - type: redis
+    name: nextup-redis
+    plan: free
