@@ -30,7 +30,6 @@ services:
         source: /*
         destination: /index.html
 
-databases:
   - type: redis
     name: nextup-redis
     plan: free

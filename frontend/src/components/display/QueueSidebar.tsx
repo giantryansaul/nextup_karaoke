@@ -140,6 +140,9 @@ export function QueueSidebar({ queue, nowPlayingId, isPaused, appUrl, onPause, o
         <p style={{ margin: 0, fontSize: '10px', color: '#555', wordBreak: 'break-all', textAlign: 'center' }}>
           {appUrl}
         </p>
+        <p style={{ margin: '4px 0 0', fontSize: '11px', fontWeight: 700, color: '#fff', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+          NextUp Karaoke
+        </p>
       </div>
     </div>
   );

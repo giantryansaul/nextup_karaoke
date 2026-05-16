@@ -48,6 +48,23 @@ export function UserPage() {
         submitLabel="Save Changes"
         onSubmit={handleUpdate}
       />
+
+      <p style={{
+        position: 'fixed',
+        bottom: '62px',
+        left: 0,
+        right: 0,
+        margin: 0,
+        textAlign: 'center',
+        fontSize: '11px',
+        fontWeight: 700,
+        color: '#333',
+        letterSpacing: '0.08em',
+        textTransform: 'uppercase',
+        pointerEvents: 'none',
+      }}>
+        NextUp Karaoke
+      </p>
     </div>
   );
 }
