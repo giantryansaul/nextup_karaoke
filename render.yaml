@@ -33,3 +33,4 @@ services:
   - type: redis
     name: nextup-redis
     plan: free
+    ipAllowList: []
