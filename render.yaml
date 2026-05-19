@@ -22,7 +22,7 @@ services:
     staticPublishPath: dist
     envVars:
       - key: VITE_API_URL
-        value: https://nextup-backend.onrender.com
+        value: https://nextup-backend-cyct.onrender.com
       - key: VITE_APP_URL
         value: https://nextup-karaoke.onrender.com
     routes:
