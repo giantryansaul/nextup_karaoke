@@ -21,22 +21,22 @@ interface QueueContextValue {
   advanceQueue: () => Promise<void>;
   setPaused: (paused: boolean) => Promise<void>;
   clearQueue: () => Promise<void>;
+  endParty: () => Promise<void>;
 }
 
 const QueueContext = createContext<QueueContextValue | null>(null);
 
 export function QueueProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<SessionState | null>(null);
-  const { user, setUser } = useUser();
+  const { user, setUser, partyCode } = useUser();
   const reregisteredRef = useRef(false);
 
   // When the first state arrives, re-register if the backend doesn't know this user.
-  // This handles the case where the server restarted and lost in-memory user records.
   useEffect(() => {
-    if (!state || !user || reregisteredRef.current) return;
+    if (!state || !user || !partyCode || reregisteredRef.current) return;
     if (user.id in state.users) return;
     reregisteredRef.current = true;
-    fetch(`${API_BASE}/api/users`, {
+    fetch(`${API_BASE}/api/parties/${partyCode}/users`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: user.name, color: user.color }),
@@ -44,11 +44,11 @@ export function QueueProvider({ children }: { children: ReactNode }) {
       .then((res) => res.json())
       .then((newUser) => setUser(newUser as typeof user))
       .catch(() => {});
-  }, [state, user, setUser]);
+  }, [state, user, partyCode, setUser]);
 
   async function addToQueue(item: AddItemPayload): Promise<void> {
-    if (!user) return;
-    const res = await fetch(`${API_BASE}/api/queue`, {
+    if (!user || !partyCode) return;
+    const res = await fetch(`${API_BASE}/api/parties/${partyCode}/queue`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...item, user_id: user.id }),
@@ -57,12 +57,14 @@ export function QueueProvider({ children }: { children: ReactNode }) {
   }
 
   async function removeFromQueue(itemId: string): Promise<void> {
-    const res = await fetch(`${API_BASE}/api/queue/${itemId}`, { method: 'DELETE' });
+    if (!partyCode) return;
+    const res = await fetch(`${API_BASE}/api/parties/${partyCode}/queue/${itemId}`, { method: 'DELETE' });
     if (!res.ok) throw new Error('Failed to remove from queue');
   }
 
   async function moveQueueItem(itemId: string, direction: MoveDirection): Promise<void> {
-    const res = await fetch(`${API_BASE}/api/queue/${itemId}/move`, {
+    if (!partyCode) return;
+    const res = await fetch(`${API_BASE}/api/parties/${partyCode}/queue/${itemId}/move`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ direction }),
@@ -71,12 +73,14 @@ export function QueueProvider({ children }: { children: ReactNode }) {
   }
 
   async function advanceQueue(): Promise<void> {
-    const res = await fetch(`${API_BASE}/api/queue/advance`, { method: 'POST' });
+    if (!partyCode) return;
+    const res = await fetch(`${API_BASE}/api/parties/${partyCode}/queue/advance`, { method: 'POST' });
     if (!res.ok) throw new Error('Failed to advance queue');
   }
 
   async function setPaused(paused: boolean): Promise<void> {
-    const res = await fetch(`${API_BASE}/api/queue/pause`, {
+    if (!partyCode) return;
+    const res = await fetch(`${API_BASE}/api/parties/${partyCode}/queue/pause`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ paused }),
@@ -85,12 +89,19 @@ export function QueueProvider({ children }: { children: ReactNode }) {
   }
 
   async function clearQueue(): Promise<void> {
-    const res = await fetch(`${API_BASE}/api/queue`, { method: 'DELETE' });
+    if (!partyCode) return;
+    const res = await fetch(`${API_BASE}/api/parties/${partyCode}/queue`, { method: 'DELETE' });
     if (!res.ok) throw new Error('Failed to clear queue');
   }
 
+  async function endParty(): Promise<void> {
+    if (!partyCode) return;
+    await fetch(`${API_BASE}/api/parties/${partyCode}`, { method: 'DELETE' });
+    // Navigation is handled by the party_ended WebSocket event
+  }
+
   return (
-    <QueueContext.Provider value={{ state, setState, addToQueue, removeFromQueue, moveQueueItem, advanceQueue, setPaused, clearQueue }}>
+    <QueueContext.Provider value={{ state, setState, addToQueue, removeFromQueue, moveQueueItem, advanceQueue, setPaused, clearQueue, endParty }}>
       {children}
     </QueueContext.Provider>
   );

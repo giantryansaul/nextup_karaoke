@@ -15,17 +15,25 @@ router = APIRouter(tags=["search"])
 
 CACHE_TTL = 86400  # 24 hours
 
+BLACKLISTED_CHANNELS: set[str] = {
+    "Backtrack Professional Karaoke Band - Topic",
+    "Backtrack Professional Karaoke Band",
+}
+
 
 def _do_search(query: str) -> list[dict[str, Any]]:
     results = YoutubeSearch(f"{query} karaoke", max_results=10).to_dict()
     items: list[dict[str, Any]] = []
     for r in results:
+        channel = r.get("channel", "")
+        if channel in BLACKLISTED_CHANNELS:
+            continue
         thumbnails = r.get("thumbnails", [])
         items.append(
             {
                 "video_id": r.get("id", ""),
                 "title": r.get("title", ""),
-                "channel": r.get("channel", ""),
+                "channel": channel,
                 "thumbnail": thumbnails[0] if thumbnails else "",
                 "duration": r.get("duration", ""),
             }

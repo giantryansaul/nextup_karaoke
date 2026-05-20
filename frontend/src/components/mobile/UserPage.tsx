@@ -5,12 +5,12 @@ import { UserProfileForm } from '../shared/UserProfileForm';
 const API_BASE = import.meta.env.VITE_API_URL ?? '';
 
 export function UserPage() {
-  const { user, setUser } = useUser();
+  const { user, setUser, partyCode } = useUser();
   const [saved, setSaved] = useState(false);
 
   const handleUpdate = async (name: string, color: string) => {
     if (!user) return;
-    const res = await fetch(`${API_BASE}/api/users/${user.id}`, {
+    const res = await fetch(`${API_BASE}/api/parties/${partyCode}/users/${user.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, color }),

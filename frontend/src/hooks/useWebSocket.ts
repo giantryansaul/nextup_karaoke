@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import type { SessionState } from '../types';
 
-function getWsUrl(): string {
+function getWsBase(): string {
   const apiUrl = import.meta.env.VITE_API_URL;
   if (apiUrl) {
     return apiUrl.replace(/^https?/, (m: string) => (m === 'https' ? 'wss' : 'ws')) + '/ws';
@@ -9,11 +9,19 @@ function getWsUrl(): string {
   return `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws`;
 }
 
-export function useWebSocket(onMessage: (state: SessionState) => void): void {
+export function useWebSocket(
+  onMessage: (state: SessionState) => void,
+  partyCode: string | null,
+  onPartyEnd?: () => void,
+): void {
   const onMessageRef = useRef(onMessage);
   onMessageRef.current = onMessage;
+  const onPartyEndRef = useRef(onPartyEnd);
+  onPartyEndRef.current = onPartyEnd;
 
   useEffect(() => {
+    if (!partyCode) return;
+
     let ws: WebSocket | null = null;
     let retryTimeout: ReturnType<typeof setTimeout> | null = null;
     let destroyed = false;
@@ -21,7 +29,7 @@ export function useWebSocket(onMessage: (state: SessionState) => void): void {
 
     function connect() {
       if (destroyed) return;
-      ws = new WebSocket(getWsUrl());
+      ws = new WebSocket(`${getWsBase()}/${partyCode}`);
 
       ws.onopen = () => {
         retryDelay = 1000;
@@ -29,9 +37,17 @@ export function useWebSocket(onMessage: (state: SessionState) => void): void {
 
       ws.onmessage = (event) => {
         try {
-          const msg = JSON.parse(event.data as string) as { type: string; data: SessionState };
+          const msg = JSON.parse(event.data as string) as { type: string; data?: SessionState };
           if (msg.type === 'state_update') {
             onMessageRef.current(msg.data as SessionState);
+          } else if (
+            msg.type === 'party_expired' ||
+            msg.type === 'party_ended' ||
+            msg.type === 'party_not_found'
+          ) {
+            destroyed = true;
+            ws?.close();
+            onPartyEndRef.current?.();
           }
         } catch {
           // ignore malformed messages
@@ -71,5 +87,5 @@ export function useWebSocket(onMessage: (state: SessionState) => void): void {
       ws?.close();
       document.removeEventListener('visibilitychange', handleVisibility);
     };
-  }, []);
+  }, [partyCode]);
 }

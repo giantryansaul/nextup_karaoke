@@ -65,3 +65,7 @@ class MoveQueueItemRequest(BaseModel):
 
 class SetPausedRequest(BaseModel):
     paused: bool
+
+
+class PartyCreateResponse(BaseModel):
+    party_code: str

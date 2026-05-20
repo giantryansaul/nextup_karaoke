@@ -10,37 +10,53 @@ from ws_manager import manager
 router = APIRouter(tags=["queue"])
 
 
-@router.get("/queue", response_model=SessionState)
-async def get_queue() -> SessionState:
-    return store.get_state()
+@router.get("/parties/{code}/queue", response_model=SessionState)
+async def get_queue(code: str) -> SessionState:
+    code = code.upper()
+    state = await store.get_party_state(code)
+    if state is None:
+        raise HTTPException(status_code=404, detail="Party not found")
+    return state
 
 
-# All fixed-path routes must be registered BEFORE /queue/{item_id} routes
+# Fixed-path routes must be registered BEFORE /queue/{item_id} routes
 
-@router.post("/queue/advance", response_model=SessionState)
-async def advance_queue() -> SessionState:
-    updated = await store.advance_queue()
-    await manager.broadcast(updated)
+@router.post("/parties/{code}/queue/advance", response_model=SessionState)
+async def advance_queue(code: str) -> SessionState:
+    code = code.upper()
+    if not await store.party_exists(code):
+        raise HTTPException(status_code=404, detail="Party not found")
+    updated = await store.advance_queue(code)
+    await manager.broadcast(code, updated)
     return updated
 
 
-@router.post("/queue/pause", response_model=SessionState)
-async def set_paused(body: SetPausedRequest) -> SessionState:
-    updated = await store.set_paused(body.paused)
-    await manager.broadcast(updated)
+@router.post("/parties/{code}/queue/pause", response_model=SessionState)
+async def set_paused(code: str, body: SetPausedRequest) -> SessionState:
+    code = code.upper()
+    if not await store.party_exists(code):
+        raise HTTPException(status_code=404, detail="Party not found")
+    updated = await store.set_paused(code, body.paused)
+    await manager.broadcast(code, updated)
     return updated
 
 
-@router.delete("/queue", response_model=SessionState)
-async def clear_queue() -> SessionState:
-    updated = await store.clear_queue()
-    await manager.broadcast(updated)
+@router.delete("/parties/{code}/queue", response_model=SessionState)
+async def clear_queue(code: str) -> SessionState:
+    code = code.upper()
+    if not await store.party_exists(code):
+        raise HTTPException(status_code=404, detail="Party not found")
+    updated = await store.clear_queue(code)
+    await manager.broadcast(code, updated)
     return updated
 
 
-@router.post("/queue", response_model=SessionState, status_code=201)
-async def add_to_queue(body: AddQueueItemRequest) -> SessionState:
-    state = store.get_state()
+@router.post("/parties/{code}/queue", response_model=SessionState, status_code=201)
+async def add_to_queue(code: str, body: AddQueueItemRequest) -> SessionState:
+    code = code.upper()
+    state = await store.get_party_state(code)
+    if state is None:
+        raise HTTPException(status_code=404, detail="Party not found")
     if body.user_id not in state.users:
         raise HTTPException(status_code=404, detail="User not found")
     user = state.users[body.user_id]
@@ -53,28 +69,33 @@ async def add_to_queue(body: AddQueueItemRequest) -> SessionState:
         added_by_name=user.name,
         added_by_color=user.color,
     )
-    await store.add_queue_item(item)
-    updated = store.get_state()
-    await manager.broadcast(updated)
+    updated = await store.add_queue_item(code, item)
+    await manager.broadcast(code, updated)
     return updated
 
 
-@router.delete("/queue/{item_id}", status_code=204)
-async def remove_from_queue(item_id: str) -> Response:
-    found = await store.remove_queue_item(item_id)
+@router.delete("/parties/{code}/queue/{item_id}", status_code=204)
+async def remove_from_queue(code: str, item_id: str) -> Response:
+    code = code.upper()
+    found = await store.remove_queue_item(code, item_id)
     if not found:
         raise HTTPException(status_code=404, detail="Item not found")
-    await manager.broadcast(store.get_state())
+    state = await store.get_party_state(code)
+    if state:
+        await manager.broadcast(code, state)
     return Response(status_code=204)
 
 
-@router.post("/queue/{item_id}/move", response_model=SessionState)
-async def move_queue_item(item_id: str, body: MoveQueueItemRequest) -> SessionState:
+@router.post("/parties/{code}/queue/{item_id}/move", response_model=SessionState)
+async def move_queue_item(code: str, item_id: str, body: MoveQueueItemRequest) -> SessionState:
+    code = code.upper()
     if body.direction not in {"up", "down", "top", "bottom"}:
         raise HTTPException(status_code=422, detail="Invalid direction")
-    found = await store.move_queue_item(item_id, body.direction)
+    found = await store.move_queue_item(code, item_id, body.direction)
     if not found:
         raise HTTPException(status_code=404, detail="Item not found")
-    updated = store.get_state()
-    await manager.broadcast(updated)
-    return updated
+    state = await store.get_party_state(code)
+    if state is None:
+        raise HTTPException(status_code=404, detail="Party not found")
+    await manager.broadcast(code, state)
+    return state

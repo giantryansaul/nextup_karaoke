@@ -1,8 +1,10 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { useCallback } from 'react';
 import type { ReactNode } from 'react';
 import { UserProvider, useUser } from './context/UserContext';
 import { QueueProvider, useQueue } from './context/QueueContext';
 import { useWebSocket } from './hooks/useWebSocket';
+import { LandingPage } from './components/mobile/LandingPage';
 import { JoinPage } from './components/mobile/JoinPage';
 import { SearchPage } from './components/mobile/SearchPage';
 import { QueuePage } from './components/mobile/QueuePage';
@@ -12,7 +14,16 @@ import { NavBar } from './components/shared/NavBar';
 
 function MobileWebSocketSync() {
   const { setState } = useQueue();
-  useWebSocket(setState);
+  const { partyCode, setPartyCode, setUser } = useUser();
+  const navigate = useNavigate();
+
+  const handlePartyEnd = useCallback(() => {
+    setUser(null);
+    setPartyCode(null);
+    navigate('/', { replace: true });
+  }, [setUser, setPartyCode, navigate]);
+
+  useWebSocket(setState, partyCode, handlePartyEnd);
   return null;
 }
 
@@ -30,23 +41,17 @@ function MobileLayout({ children }: { children: ReactNode }) {
 }
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
-  const { user } = useUser();
-  if (!user) return <Navigate to="/" replace />;
+  const { user, partyCode } = useUser();
+  if (!user || !partyCode) return <Navigate to="/" replace />;
   return <>{children}</>;
 }
 
 function AppRoutes() {
   return (
     <Routes>
-      <Route path="/display" element={<DisplayView />} />
-      <Route
-        path="/"
-        element={
-          <MobileLayout>
-            <JoinPage />
-          </MobileLayout>
-        }
-      />
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/display/:partyCode" element={<DisplayView />} />
+      <Route path="/join/:partyCode" element={<JoinPage />} />
       <Route
         path="/search"
         element={

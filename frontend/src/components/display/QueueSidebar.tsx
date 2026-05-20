@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import type { QueueItem } from '../../types';
 
@@ -5,9 +6,11 @@ interface QueueSidebarProps {
   queue: QueueItem[];
   nowPlayingId: string | null;
   isPaused: boolean;
-  appUrl: string;
+  partyCode: string;
+  joinUrl: string;
   onPause: () => void;
   onSkip: () => void;
+  onEndParty: () => void;
 }
 
 function getVisibleItems(upcoming: QueueItem[]): { items: QueueItem[]; hasEllipsis: boolean } {
@@ -18,17 +21,24 @@ function getVisibleItems(upcoming: QueueItem[]): { items: QueueItem[]; hasEllips
   };
 }
 
-export function QueueSidebar({ queue, nowPlayingId, isPaused, appUrl, onPause, onSkip }: QueueSidebarProps) {
+export function QueueSidebar({ queue, nowPlayingId, isPaused, partyCode, joinUrl, onPause, onSkip, onEndParty }: QueueSidebarProps) {
+  const [showEndPartyModal, setShowEndPartyModal] = useState(false);
   const nowPlaying = queue.find((i) => i.id === nowPlayingId) ?? null;
   const upcoming = queue.filter((i) => i.id !== nowPlayingId);
   const { items, hasEllipsis } = getVisibleItems(upcoming);
   const hasNowPlaying = nowPlayingId !== null;
+
+  const handleEndPartyConfirm = () => {
+    setShowEndPartyModal(false);
+    onEndParty();
+  };
 
   return (
     <div style={{
       display: 'flex',
       flexDirection: 'column',
       height: '100%',
+      width: '100%',
       background: '#0a0a0a',
       borderLeft: '1px solid #1a1a1a',
       overflow: 'hidden',
@@ -117,33 +127,120 @@ export function QueueSidebar({ queue, nowPlayingId, isPaused, appUrl, onPause, o
         )}
       </div>
 
-      {/* QR Code */}
+      {/* QR Code + Join Info — anchored to bottom, always centered */}
       <div style={{
-        padding: '16px 12px',
+        padding: '12px',
         borderTop: '1px solid #1a1a1a',
         flexShrink: 0,
+        width: '100%',
+        boxSizing: 'border-box',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: '8px',
+        gap: '6px',
       }}>
         <p style={{ margin: 0, fontSize: '10px', color: '#666', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
           Scan to join
         </p>
-        <QRCodeSVG
-          value={appUrl}
-          size={120}
-          bgColor="#000000"
-          fgColor="#ffffff"
-          level="M"
-        />
-        <p style={{ margin: 0, fontSize: '10px', color: '#555', wordBreak: 'break-all', textAlign: 'center' }}>
-          {appUrl}
+        <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+          <QRCodeSVG
+            value={joinUrl}
+            size={110}
+            bgColor="#000000"
+            fgColor="#ffffff"
+            level="M"
+          />
+        </div>
+        <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#fff', wordBreak: 'break-all', textAlign: 'center', lineHeight: 1.3 }}>
+          {joinUrl}
         </p>
-        <p style={{ margin: '4px 0 0', fontSize: '11px', fontWeight: 700, color: '#fff', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+        <p style={{ margin: 0, fontSize: '22px', fontWeight: 800, color: '#fff', letterSpacing: '0.3em', textTransform: 'uppercase' }}>
+          {partyCode}
+        </p>
+        <p style={{ margin: '2px 0 0', fontSize: '11px', fontWeight: 700, color: '#fff', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
           NextUp Karaoke
         </p>
       </div>
+
+      {/* End Party button */}
+      <div style={{ padding: '8px 12px 12px', flexShrink: 0 }}>
+        <button
+          onClick={() => setShowEndPartyModal(true)}
+          style={{
+            width: '100%',
+            padding: '8px',
+            background: '#1a0505',
+            color: '#ff6b6b',
+            border: '1px solid #4a1010',
+            borderRadius: '6px',
+            fontSize: '11px',
+            fontWeight: 700,
+            cursor: 'pointer',
+            letterSpacing: '0.04em',
+          }}
+        >
+          ✕ End Party
+        </button>
+      </div>
+
+      {/* End Party Confirmation Modal */}
+      {showEndPartyModal && (
+        <div
+          onClick={() => setShowEndPartyModal(false)}
+          style={{
+            position: 'fixed', inset: 0,
+            background: 'rgba(0,0,0,0.85)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 200,
+            padding: '24px',
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: '#111',
+              border: '1px solid #333',
+              borderRadius: '16px',
+              padding: '28px 24px',
+              width: '100%',
+              maxWidth: '380px',
+              textAlign: 'center',
+            }}
+          >
+            <p style={{ fontSize: '28px', margin: '0 0 16px' }}>⚠️</p>
+            <p style={{ margin: '0 0 8px', fontSize: '16px', fontWeight: 800, lineHeight: 1.3 }}>
+              END THE PARTY?
+            </p>
+            <p style={{ margin: '0 0 28px', fontSize: '13px', color: '#666' }}>
+              This will disconnect all users and remove all songs. This cannot be undone.
+            </p>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                onClick={() => setShowEndPartyModal(false)}
+                style={{
+                  flex: 1, padding: '12px',
+                  background: '#1a1a1a', color: '#fff',
+                  border: '1px solid #333', borderRadius: '8px',
+                  fontSize: '14px', fontWeight: 600, cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleEndPartyConfirm}
+                style={{
+                  flex: 1, padding: '12px',
+                  background: '#3a0a0a', color: '#ff6b6b',
+                  border: '1px solid #6a1a1a', borderRadius: '8px',
+                  fontSize: '14px', fontWeight: 700, cursor: 'pointer',
+                }}
+              >
+                End Party
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -153,7 +250,7 @@ function QueueEntry({ item }: { item: QueueItem }) {
     <div>
       <p style={{
         margin: '0 0 2px',
-        fontSize: '12px',
+        fontSize: '14px',
         fontWeight: 600,
         color: '#e0e0e0',
         overflow: 'hidden',
@@ -174,7 +271,7 @@ function QueueEntry({ item }: { item: QueueItem }) {
       </p>
       <p style={{
         margin: 0,
-        fontSize: '10px',
+        fontSize: '12px',
         color: item.added_by_color,
         fontWeight: 600,
         overflow: 'hidden',

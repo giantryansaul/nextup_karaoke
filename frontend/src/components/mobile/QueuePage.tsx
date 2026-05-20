@@ -3,8 +3,9 @@ import { useQueue } from '../../context/QueueContext';
 import type { MoveDirection, QueueItem } from '../../types';
 
 export function QueuePage() {
-  const { state, removeFromQueue, moveQueueItem, setPaused, advanceQueue, clearQueue } = useQueue();
+  const { state, removeFromQueue, moveQueueItem, setPaused, advanceQueue, clearQueue, endParty } = useQueue();
   const [showClearModal, setShowClearModal] = useState(false);
+  const [showEndPartyModal, setShowEndPartyModal] = useState(false);
 
   if (!state) {
     return <p style={{ textAlign: 'center', color: '#555', padding: '48px 16px' }}>Loading...</p>;
@@ -16,6 +17,12 @@ export function QueuePage() {
   const handleClearConfirm = async () => {
     await clearQueue();
     setShowClearModal(false);
+  };
+
+  const handleEndPartyConfirm = async () => {
+    await endParty();
+    setShowEndPartyModal(false);
+    // Navigation happens via party_ended WebSocket event
   };
 
   return (
@@ -125,7 +132,27 @@ export function QueuePage() {
         ))
       )}
 
-      {/* Confirmation modal */}
+      {/* End Party button */}
+      <div style={{ padding: '16px', borderTop: '1px solid #1a1a1a', marginTop: '8px' }}>
+        <button
+          onClick={() => setShowEndPartyModal(true)}
+          style={{
+            width: '100%',
+            padding: '13px',
+            background: '#1a0505',
+            color: '#ff6b6b',
+            border: '1px solid #4a1010',
+            borderRadius: '8px',
+            fontSize: '14px',
+            fontWeight: 700,
+            cursor: 'pointer',
+          }}
+        >
+          ✕ End Party
+        </button>
+      </div>
+
+      {/* Clear All confirmation modal */}
       {showClearModal && (
         <div
           onClick={() => setShowClearModal(false)}
@@ -160,15 +187,10 @@ export function QueuePage() {
               <button
                 onClick={() => setShowClearModal(false)}
                 style={{
-                  flex: 1,
-                  padding: '12px',
-                  background: '#1a1a1a',
-                  color: '#fff',
-                  border: '1px solid #333',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
+                  flex: 1, padding: '12px',
+                  background: '#1a1a1a', color: '#fff',
+                  border: '1px solid #333', borderRadius: '8px',
+                  fontSize: '14px', fontWeight: 600, cursor: 'pointer',
                 }}
               >
                 Cancel
@@ -176,18 +198,72 @@ export function QueuePage() {
               <button
                 onClick={handleClearConfirm}
                 style={{
-                  flex: 1,
-                  padding: '12px',
-                  background: '#3a0a0a',
-                  color: '#ff6b6b',
-                  border: '1px solid #6a1a1a',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  fontWeight: 700,
-                  cursor: 'pointer',
+                  flex: 1, padding: '12px',
+                  background: '#3a0a0a', color: '#ff6b6b',
+                  border: '1px solid #6a1a1a', borderRadius: '8px',
+                  fontSize: '14px', fontWeight: 700, cursor: 'pointer',
                 }}
               >
                 Yes, Clear It
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* End Party confirmation modal */}
+      {showEndPartyModal && (
+        <div
+          onClick={() => setShowEndPartyModal(false)}
+          style={{
+            position: 'fixed', inset: 0,
+            background: 'rgba(0,0,0,0.85)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 200,
+            padding: '24px',
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: '#111',
+              border: '1px solid #333',
+              borderRadius: '16px',
+              padding: '28px 24px',
+              width: '100%',
+              maxWidth: '340px',
+              textAlign: 'center',
+            }}
+          >
+            <p style={{ fontSize: '28px', margin: '0 0 16px' }}>🚫</p>
+            <p style={{ margin: '0 0 8px', fontSize: '16px', fontWeight: 800, lineHeight: 1.3 }}>
+              END THE PARTY?
+            </p>
+            <p style={{ margin: '0 0 28px', fontSize: '13px', color: '#666' }}>
+              This will disconnect all users and remove all songs. This cannot be undone.
+            </p>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                onClick={() => setShowEndPartyModal(false)}
+                style={{
+                  flex: 1, padding: '12px',
+                  background: '#1a1a1a', color: '#fff',
+                  border: '1px solid #333', borderRadius: '8px',
+                  fontSize: '14px', fontWeight: 600, cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleEndPartyConfirm}
+                style={{
+                  flex: 1, padding: '12px',
+                  background: '#3a0a0a', color: '#ff6b6b',
+                  border: '1px solid #6a1a1a', borderRadius: '8px',
+                  fontSize: '14px', fontWeight: 700, cursor: 'pointer',
+                }}
+              >
+                End Party
               </button>
             </div>
           </div>
@@ -235,13 +311,13 @@ function QueueRow({ item, isPlaying, isFirst, isLast, onMove, onDelete }: QueueR
               NOW PLAYING
             </span>
           )}
-          <p style={{ margin: '0 0 2px', fontSize: '13px', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <p style={{ margin: '0 0 2px', fontSize: '15px', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {item.title}
           </p>
           <p style={{ margin: '0 0 2px', fontSize: '12px', color: '#888', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {item.channel}
           </p>
-          <p style={{ margin: 0, fontSize: '11px', color: item.added_by_color }}>
+          <p style={{ margin: 0, fontSize: '13px', color: item.added_by_color }}>
             {item.added_by_name}
           </p>
         </div>
