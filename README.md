@@ -6,13 +6,11 @@
 
 ---
 
-## Screenshots
-
-| Landing page | Song search | User profile |
+| | | |
 |---|---|---|
 | ![Landing page](docs/screenshots/landing.png) | ![Song search](docs/screenshots/search.png) | ![User profile](docs/screenshots/user.png) |
 
-| Display screen |
+| |
 |---|
 | ![Display screen](docs/screenshots/display.png) |
 
