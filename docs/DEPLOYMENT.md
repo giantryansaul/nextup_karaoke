@@ -40,6 +40,53 @@ After updating the static site env vars, trigger a manual redeploy of the fronte
 
 ---
 
+## Custom domain (e.g. nextupkaraoke.app)
+
+When the frontend is served from your own domain but the API stays on `*.onrender.com`, the browser treats that as **cross-origin**. The backend must explicitly allow your frontend origin.
+
+### Fix CORS errors
+
+1. **Render → `nextup-backend` → Environment**
+   - Set `FRONTEND_URL` to your public site origin **exactly** (no trailing slash):
+     - `https://nextupkaraoke.app`
+   - If guests can use both apex and `www`, use a comma-separated list:
+     - `https://nextupkaraoke.app,https://www.nextupkaraoke.app`
+   - Save changes — Render redeploys the backend automatically.
+
+2. **Render → `nextup-karaoke` (static site) → Environment**
+   - `VITE_API_URL` → `https://nextup-backend-cyct.onrender.com` (or `https://api.nextupkaraoke.app` if you add that custom domain on the backend)
+   - `VITE_APP_URL` → `https://nextupkaraoke.app` (QR codes and share links)
+   - **Manual Deploy** the static site after saving (Vite bakes env vars at build time).
+
+3. **Redeploy the backend** after changing `FRONTEND_URL` (Render auto-redeploys on save; wait until status is **Live**).
+
+4. **Verify CORS is actually active**
+
+   ```bash
+   # What origins did the running server load?
+   curl -s https://nextup-backend-cyct.onrender.com/health
+
+   # Must include access-control-allow-origin (not just allow-methods):
+   curl -sD - -o /dev/null -H "Origin: https://nextupkaraoke.app" \
+     https://nextup-backend-cyct.onrender.com/health | grep -i access-control
+   ```
+
+   You should see **both**:
+   - `access-control-allow-origin: https://nextupkaraoke.app`
+   - `access-control-allow-credentials: true`
+
+   If you only see `allow-credentials` and `allow-methods` but **no** `allow-origin`, the live `FRONTEND_URL` still does not match your site (typo, trailing slash, old value, or deploy not finished).
+
+5. **Verify in the browser**
+   - Open [https://nextupkaraoke.app](https://nextupkaraoke.app), DevTools → Network.
+   - Host a party or join; API calls should return `200`, not CORS errors.
+
+### Why this happens
+
+The app at `https://nextupkaraoke.app` calls `https://nextup-backend-cyct.onrender.com`. The browser sends `Origin: https://nextupkaraoke.app`. FastAPI’s CORS middleware only reflects origins listed in `FRONTEND_URL`. If that variable still says `https://nextup-karaoke.onrender.com`, the backend blocks the request.
+
+---
+
 ## Local Development
 
 ### Backend
@@ -111,7 +158,7 @@ Song search uses `youtubesearchpython`, which scrapes YouTube's internal search 
 | Variable | Required | Description |
 |---|---|---|
 | `REDIS_URL` | No | Redis connection string. Falls back to in-memory if not set. |
-| `FRONTEND_URL` | Yes (prod) | Frontend origin for CORS. Set to the Render static site URL. |
+| `FRONTEND_URL` | Yes (prod) | Frontend origin(s) for CORS (e.g. `https://nextupkaraoke.app`). Comma-separated for multiple origins. |
 
 ### Frontend (build-time)
 | Variable | Required | Description |

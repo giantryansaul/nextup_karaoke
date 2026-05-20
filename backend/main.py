@@ -37,9 +37,25 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 app = FastAPI(title="NextUp Karaoke", lifespan=lifespan)
 
+
+def _normalize_origin(origin: str) -> str:
+    return origin.strip().rstrip("/")
+
+
+def _cors_origins() -> list[str]:
+    raw = os.getenv("FRONTEND_URL", "*").strip()
+    if raw == "*":
+        return ["*"]
+    return [
+        _normalize_origin(origin)
+        for origin in raw.split(",")
+        if origin.strip()
+    ]
+
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[os.getenv("FRONTEND_URL", "*")],
+    allow_origins=_cors_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -72,5 +88,9 @@ async def websocket_endpoint(websocket: WebSocket, party_code: str) -> None:
 
 
 @app.get("/health")
-async def health() -> dict[str, str]:
-    return {"status": "ok"}
+async def health() -> dict[str, object]:
+    origins = _cors_origins()
+    return {
+        "status": "ok",
+        "cors_allowed_origins": origins,
+    }

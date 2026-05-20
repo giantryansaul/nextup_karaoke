@@ -12,7 +12,7 @@ services:
           name: nextup-redis
           property: connectionString
       - key: FRONTEND_URL
-        value: https://nextup-karaoke.onrender.com
+        value: https://nextupkaraoke.app
 
   - type: web
     name: nextup-karaoke
@@ -24,7 +24,7 @@ services:
       - key: VITE_API_URL
         value: https://nextup-backend-cyct.onrender.com
       - key: VITE_APP_URL
-        value: https://nextup-karaoke.onrender.com
+        value: https://nextupkaraoke.app
     routes:
       - type: rewrite
         source: /*
