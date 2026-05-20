@@ -2,27 +2,27 @@
 
 **YouTube karaoke queue for parties** — a real-time web app where guests join from their phones, search for karaoke songs on YouTube, and take turns singing on the big screen.
 
-🌐 **Live demo:** [nextup-karaoke.onrender.com](https://nextup-karaoke.onrender.com)
+🌐 **Live demo:** [nextupkaraoke.app](https://nextupkaraoke.app/)
 
 ---
 
 ## Screenshots
 
-| Landing page | Display screen | Song search |
+| Landing page | Song search | User profile |
 |---|---|---|
-| ![Landing page](docs/screenshots/landing.png) | ![Display screen](docs/screenshots/display.png) | ![Song search](docs/screenshots/search.png) |
+| ![Landing page](docs/screenshots/landing.png) | ![Song search](docs/screenshots/search.png) | ![User profile](docs/screenshots/user.png) |
 
-| Queue | User profile |
-|---|---|
-| ![Queue](docs/screenshots/queue.png) | ![User profile](docs/screenshots/user.png) |
+| Display screen |
+|---|
+| ![Display screen](docs/screenshots/display.png) |
 
 ---
 
 ## How it works
 
-1. **Host** opens `/display` on the TV or projector and clicks **Host a Party** → a 4-letter party code + QR code appears on screen
-2. **Guests** scan the QR code or go to the app URL and enter the code on their phone
-3. **Guests** search for any song — searches automatically append "karaoke" to find vocal tracks
+1. Opens `/display` on the TV or projector to watch the karaoke from and click **Host a Party** → a 4-letter party code + QR code appears on screen
+2. Guests can scan the QR code or go to the app URL and enter the code on their phone
+3. Guests can search for any song — searches automatically append "karaoke" to find vocal tracks
 4. Songs play in order; when one ends the next starts automatically
 5. Anyone can reorder or remove songs from the queue at any time
 
@@ -44,9 +44,9 @@
 | Layer | Technology |
 |---|---|
 | Backend | Python, FastAPI, WebSockets |
-| Frontend | React 18, TypeScript, Vite |
+| Frontend | React 19, TypeScript, Vite |
 | Persistence | Redis (falls back to in-memory) |
-| Search | `youtubesearchpython` (no API key) |
+| Search | `youtube-search` (no API key) |
 | Video | YouTube IFrame API |
 | Deployment | Render (web service + static site + Redis) |
 
@@ -86,4 +86,4 @@ See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for the full deployment guide.
 
 ## License
 
-MIT
+[MIT](LICENSE)

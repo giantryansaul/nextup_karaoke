@@ -124,9 +124,9 @@ docker run -p 6379:6379 redis:alpine
 
 ## How to Run a Party
 
-1. **Host:** Open `https://nextup-karaoke.onrender.com/display` on the TV/projector
+1. **Host:** Open `https://nextupkaraoke.app/display` on the TV/projector
 2. **Host:** Click **Start Party** (one-time click to enable browser autoplay)
-3. **Guests:** Scan the QR code on the display, or navigate to `https://nextup-karaoke.onrender.com` on their phone
+3. **Guests:** Scan the QR code on the display, or navigate to `https://nextupkaraoke.app` on their phone
 4. **Guests:** Enter their name and pick a display color, then tap **Join Party**
 5. **Guests:** Search for songs and tap **Add** to queue them up
 6. Songs play automatically; when one ends, the next starts
@@ -148,7 +148,7 @@ The `routes` rewrite rule in `render.yaml` rewrites all paths (`/*`) to `/index.
 Modern browsers block autoplay of videos with sound unless the page has received a user gesture. The **Start Party** button on the display screen is intentionally required — clicking it grants autoplay permission for the browser session. All subsequent songs (`loadVideoById`) play automatically without further interaction.
 
 ### YouTube Search
-Song search uses `youtubesearchpython`, which scrapes YouTube's internal search API without requiring an API key. Results may occasionally differ from the official YouTube search. If search stops working, check for a newer version of the package.
+Song search uses `youtube-search`, which scrapes YouTube's internal search API without requiring an API key. Results may occasionally differ from the official YouTube search. If search stops working, check for a newer version of the package.
 
 ---
 
