@@ -33,6 +33,14 @@ export interface SearchResult {
   duration: string;
 }
 
+export interface FavoriteSong {
+  video_id: string;
+  title: string;
+  channel: string;
+  thumbnail: string;
+  duration: string;
+}
+
 export const PRESET_COLORS: { name: string; hex: string }[] = [
   { name: 'Red',    hex: '#FF4444' },
   { name: 'Orange', hex: '#FF8800' },
