@@ -71,7 +71,7 @@ export function FavoritesPage() {
       <div style={{ padding: '8px 0' }}>
         {favorites.length === 0 && (
           <p style={{ textAlign: 'center', color: '#444', padding: '48px 16px', fontSize: '15px', lineHeight: 1.6 }}>
-            You haven't favorited any songs yet.{'\n'}Tap ☆ next to a song in Search or Queue to save it.
+            You haven't favorited any songs yet.<br />Tap ☆ next to a song in Search or Queue to save it.
           </p>
         )}
         {favorites.length > 0 && filtered.length === 0 && (
