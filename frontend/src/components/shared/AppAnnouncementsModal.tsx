@@ -8,6 +8,13 @@ interface AppAnnouncement {
 
 const APP_ANNOUNCEMENTS: AppAnnouncement[] = [
   {
+    version: '0.2.0',
+    date: 'June 20, 2026',
+    items: [
+      'Favorites — star any song from Search or Queue to save it. Find your saved songs in the new Favorites tab.',
+    ],
+  },
+  {
     version: '0.1.2',
     date: 'June 20, 2026',
     items: [
