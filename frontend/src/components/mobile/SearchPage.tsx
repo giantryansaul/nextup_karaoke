@@ -4,6 +4,7 @@ import { useUser } from '../../context/UserContext';
 import { PRESET_COLORS } from '../../types';
 import type { SearchResult, User } from '../../types';
 import { GuestPickerModal } from './GuestPickerModal';
+import { useFavorites } from '../../context/FavoritesContext';
 
 const API_BASE = import.meta.env.VITE_API_URL ?? '';
 const SEARCH_TIMEOUT_MS = 10_000;
@@ -24,6 +25,7 @@ function pickUnusedColor(usedColors: Set<string>): string {
 export function SearchPage() {
   const { addToQueue, registerUser, state } = useQueue();
   const { user } = useUser();
+  const { isFavorited, toggleFavorite } = useFavorites();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -207,11 +209,10 @@ export function SearchPage() {
 
         {results.map((r) => {
           const added = addedIds.has(r.video_id);
+          const favorited = isFavorited(r.video_id);
           return (
-            <button
+            <div
               key={r.video_id}
-              onClick={() => handleAdd(r)}
-              disabled={added}
               style={{
                 width: '100%',
                 display: 'flex',
@@ -219,11 +220,8 @@ export function SearchPage() {
                 gap: '12px',
                 padding: '12px 16px',
                 background: added ? '#1a2a1a' : 'transparent',
-                border: 'none',
                 borderBottom: '1px solid #1a1a1a',
-                color: '#fff',
-                textAlign: 'left',
-                cursor: added ? 'default' : 'pointer',
+                boxSizing: 'border-box',
               }}
             >
               <img
@@ -239,18 +237,39 @@ export function SearchPage() {
                   {r.channel} · {r.duration}
                 </p>
               </div>
-              <span style={{
-                flexShrink: 0,
-                padding: '6px 12px',
-                background: added ? '#2a5a2a' : '#222',
-                borderRadius: '6px',
-                fontSize: '13px',
-                fontWeight: 600,
-                color: added ? '#4ade80' : '#fff',
-              }}>
+              <button
+                onClick={() => toggleFavorite({ video_id: r.video_id, title: r.title, channel: r.channel, thumbnail: r.thumbnail, duration: r.duration })}
+                style={{
+                  flexShrink: 0,
+                  padding: '6px 8px',
+                  background: 'transparent',
+                  border: 'none',
+                  fontSize: '20px',
+                  cursor: 'pointer',
+                  color: favorited ? '#FFD700' : '#444',
+                }}
+                aria-label={favorited ? 'Remove from favorites' : 'Add to favorites'}
+              >
+                {favorited ? '★' : '☆'}
+              </button>
+              <button
+                onClick={() => handleAdd(r)}
+                disabled={added}
+                style={{
+                  flexShrink: 0,
+                  padding: '6px 12px',
+                  background: added ? '#2a5a2a' : '#222',
+                  borderRadius: '6px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  color: added ? '#4ade80' : '#fff',
+                  border: 'none',
+                  cursor: added ? 'default' : 'pointer',
+                }}
+              >
                 {added ? 'Added ✓' : 'Add'}
-              </span>
-            </button>
+              </button>
+            </div>
           );
         })}
 
