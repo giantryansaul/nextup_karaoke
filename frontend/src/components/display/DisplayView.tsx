@@ -13,6 +13,7 @@ export function DisplayView() {
   const code = (partyCode ?? '').toUpperCase();
   const navigate = useNavigate();
   const [sessionState, setSessionState] = useState<SessionState | null>(null);
+  const [skipToNearEndSignal, setSkipToNearEndSignal] = useState(0);
 
   const handlePartyEnd = useCallback(() => {
     navigate('/', { replace: true });
@@ -77,6 +78,7 @@ export function DisplayView() {
           nowPlayingVideoId={nowPlayingItem?.video_id ?? null}
           isPaused={isPaused}
           restartSignal={restartSignal}
+          skipToNearEndSignal={skipToNearEndSignal}
           onVideoEnded={handleVideoEnded}
         />
       </div>
@@ -92,6 +94,7 @@ export function DisplayView() {
           onPause={handlePause}
           onSkip={handleSkip}
           onRestart={handleRestart}
+          onSkipToNearEnd={() => setSkipToNearEndSignal((s) => s + 1)}
           onEndParty={handleEndParty}
         />
       </div>

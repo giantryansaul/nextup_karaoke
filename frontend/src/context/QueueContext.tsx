@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
-import type { MoveDirection, SessionState } from '../types';
+import type { MoveDirection, SessionState, User } from '../types';
 import { useUser } from './UserContext';
 
 const API_BASE = import.meta.env.VITE_API_URL ?? '';
@@ -15,7 +15,8 @@ interface AddItemPayload {
 interface QueueContextValue {
   state: SessionState | null;
   setState: (s: SessionState) => void;
-  addToQueue: (item: AddItemPayload) => Promise<void>;
+  addToQueue: (item: AddItemPayload, asUserId?: string) => Promise<void>;
+  registerUser: (name: string, color: string) => Promise<User>;
   removeFromQueue: (itemId: string) => Promise<void>;
   moveQueueItem: (itemId: string, direction: MoveDirection) => Promise<void>;
   advanceQueue: () => Promise<void>;
@@ -47,14 +48,25 @@ export function QueueProvider({ children }: { children: ReactNode }) {
       .catch(() => {});
   }, [state, user, partyCode, setUser]);
 
-  async function addToQueue(item: AddItemPayload): Promise<void> {
+  async function addToQueue(item: AddItemPayload, asUserId?: string): Promise<void> {
     if (!user || !partyCode) return;
     const res = await fetch(`${API_BASE}/api/parties/${partyCode}/queue`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...item, user_id: user.id }),
+      body: JSON.stringify({ ...item, user_id: asUserId ?? user.id }),
     });
     if (!res.ok) throw new Error('Failed to add to queue');
+  }
+
+  async function registerUser(name: string, color: string): Promise<User> {
+    if (!partyCode) throw new Error('No party code');
+    const res = await fetch(`${API_BASE}/api/parties/${partyCode}/users`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, color }),
+    });
+    if (!res.ok) throw new Error('Failed to register user');
+    return res.json() as Promise<User>;
   }
 
   async function removeFromQueue(itemId: string): Promise<void> {
@@ -108,7 +120,7 @@ export function QueueProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <QueueContext.Provider value={{ state, setState, addToQueue, removeFromQueue, moveQueueItem, advanceQueue, restartTrack, setPaused, clearQueue, endParty }}>
+    <QueueContext.Provider value={{ state, setState, addToQueue, registerUser, removeFromQueue, moveQueueItem, advanceQueue, restartTrack, setPaused, clearQueue, endParty }}>
       {children}
     </QueueContext.Provider>
   );

@@ -1,6 +1,8 @@
 /// <reference types="youtube" />
 import { useEffect, useRef, useState } from 'react';
 
+const EARLY_END_THRESHOLD = 5;
+
 declare global {
   interface Window {
     onYouTubeIframeAPIReady: () => void;
@@ -30,14 +32,16 @@ interface YouTubePlayerProps {
   nowPlayingVideoId: string | null;
   isPaused: boolean;
   restartSignal: number;
+  skipToNearEndSignal: number;
   onVideoEnded: () => void;
 }
 
-export function YouTubePlayer({ nowPlayingVideoId, isPaused, restartSignal, onVideoEnded }: YouTubePlayerProps) {
+export function YouTubePlayer({ nowPlayingVideoId, isPaused, restartSignal, skipToNearEndSignal, onVideoEnded }: YouTubePlayerProps) {
   const playerRef = useRef<YT.Player | null>(null);
   const onEndedRef = useRef(onVideoEnded);
   const prevIsPausedRef = useRef(false);
   const errorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const earlyEndIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [showOverlay, setShowOverlay] = useState(true);
   const [started, setStarted] = useState(false);
   const [embedError, setEmbedError] = useState(false);
@@ -65,6 +69,23 @@ export function YouTubePlayer({ nowPlayingVideoId, isPaused, restartSignal, onVi
         } as YT.PlayerVars,
         events: {
           onStateChange: (event: YT.OnStateChangeEvent) => {
+            if (event.data === YT.PlayerState.PLAYING) {
+              if (earlyEndIntervalRef.current) clearInterval(earlyEndIntervalRef.current);
+              earlyEndIntervalRef.current = setInterval(() => {
+                const player = playerRef.current;
+                if (!player) return;
+                const duration = player.getDuration();
+                const current = player.getCurrentTime();
+                if (duration > 0 && duration - current <= EARLY_END_THRESHOLD) {
+                  if (earlyEndIntervalRef.current) clearInterval(earlyEndIntervalRef.current);
+                  earlyEndIntervalRef.current = null;
+                  onEndedRef.current();
+                }
+              }, 1000);
+            } else {
+              if (earlyEndIntervalRef.current) clearInterval(earlyEndIntervalRef.current);
+              earlyEndIntervalRef.current = null;
+            }
             if (event.data === YT.PlayerState.ENDED) {
               onEndedRef.current();
             }
@@ -85,6 +106,7 @@ export function YouTubePlayer({ nowPlayingVideoId, isPaused, restartSignal, onVi
     return () => {
       mounted = false;
       if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
+      if (earlyEndIntervalRef.current) clearInterval(earlyEndIntervalRef.current);
       playerRef.current?.destroy();
       playerRef.current = null;
     };
@@ -100,6 +122,10 @@ export function YouTubePlayer({ nowPlayingVideoId, isPaused, restartSignal, onVi
     if (errorTimerRef.current) {
       clearTimeout(errorTimerRef.current);
       errorTimerRef.current = null;
+    }
+    if (earlyEndIntervalRef.current) {
+      clearInterval(earlyEndIntervalRef.current);
+      earlyEndIntervalRef.current = null;
     }
     setEmbedError(false);
     playerRef.current.loadVideoById(nowPlayingVideoId);
@@ -124,6 +150,12 @@ export function YouTubePlayer({ nowPlayingVideoId, isPaused, restartSignal, onVi
     playerRef.current.seekTo(0, true);
     if (!isPaused) playerRef.current.playVideo();
   }, [restartSignal, started]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!playerRef.current || !started || skipToNearEndSignal === 0) return;
+    const duration = playerRef.current.getDuration();
+    if (duration > 0) playerRef.current.seekTo(Math.max(0, duration - 10), true);
+  }, [skipToNearEndSignal, started]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleStart = () => {
     setShowOverlay(false);

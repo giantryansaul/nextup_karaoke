@@ -1,18 +1,37 @@
 import { useState, useEffect, useRef } from 'react';
 import { useQueue } from '../../context/QueueContext';
-import type { SearchResult } from '../../types';
+import { useUser } from '../../context/UserContext';
+import { PRESET_COLORS } from '../../types';
+import type { SearchResult, User } from '../../types';
+import { GuestPickerModal } from './GuestPickerModal';
 
 const API_BASE = import.meta.env.VITE_API_URL ?? '';
 const SEARCH_TIMEOUT_MS = 10_000;
 
+function hexToRgba(hex: string, alpha: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function pickUnusedColor(usedColors: Set<string>): string {
+  const available = PRESET_COLORS.filter((c) => !usedColors.has(c.hex));
+  const pool = available.length > 0 ? available : PRESET_COLORS;
+  return pool[Math.floor(Math.random() * pool.length)].hex;
+}
+
 export function SearchPage() {
-  const { addToQueue } = useQueue();
+  const { addToQueue, registerUser, state } = useQueue();
+  const { user } = useUser();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
   const [showDrmModal, setShowDrmModal] = useState(false);
+  const [pickingFor, setPickingFor] = useState<User | null>(null);
+  const [showGuestPicker, setShowGuestPicker] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -57,12 +76,10 @@ export function SearchPage() {
   const handleAdd = async (result: SearchResult) => {
     if (addedIds.has(result.video_id)) return;
     try {
-      await addToQueue({
-        video_id: result.video_id,
-        title: result.title,
-        channel: result.channel,
-        thumbnail: result.thumbnail,
-      });
+      await addToQueue(
+        { video_id: result.video_id, title: result.title, channel: result.channel, thumbnail: result.thumbnail },
+        pickingFor?.id,
+      );
       setAddedIds((prev) => new Set(prev).add(result.video_id));
       setTimeout(() => {
         setAddedIds((prev) => {
@@ -71,10 +88,21 @@ export function SearchPage() {
           return next;
         });
       }, 1500);
+      if (pickingFor) setPickingFor(null);
     } catch {
       // silently fail — could show a toast here
     }
   };
+
+  const handleAddNewGuest = async (name: string) => {
+    const usedColors = new Set(Object.values(state?.users ?? {}).map((u) => u.color));
+    const color = pickUnusedColor(usedColors);
+    const newUser = await registerUser(name, color);
+    setPickingFor(newUser);
+    setShowGuestPicker(false);
+  };
+
+  const partyUsers = Object.values(state?.users ?? {}).filter((u) => u.id !== user?.id);
 
   return (
     <div style={{ paddingBottom: '80px' }}>
@@ -103,6 +131,57 @@ export function SearchPage() {
             boxSizing: 'border-box',
           }}
         />
+
+        {pickingFor ? (
+          <div style={{
+            marginTop: '10px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '9px 12px',
+            background: hexToRgba(pickingFor.color, 0.12),
+            border: `1px solid ${hexToRgba(pickingFor.color, 0.35)}`,
+            borderRadius: '8px',
+          }}>
+            <span style={{ fontSize: '13px', fontWeight: 600, color: '#bbb' }}>
+              Picking for{' '}
+              <span style={{ color: pickingFor.color, fontWeight: 700 }}>{pickingFor.name}</span>
+            </span>
+            <button
+              onClick={() => setPickingFor(null)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#666',
+                fontSize: '13px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                padding: '0 0 0 12px',
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => setShowGuestPicker(true)}
+            style={{
+              marginTop: '10px',
+              width: '100%',
+              padding: '8px 12px',
+              background: 'transparent',
+              border: '1px solid #2a2a2a',
+              borderRadius: '8px',
+              color: '#555',
+              fontSize: '13px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              textAlign: 'center',
+            }}
+          >
+            Add for someone else
+          </button>
+        )}
       </div>
 
       <div style={{ padding: '8px 0' }}>
@@ -194,6 +273,15 @@ export function SearchPage() {
           </div>
         )}
       </div>
+
+      {showGuestPicker && (
+        <GuestPickerModal
+          partyUsers={partyUsers}
+          onPick={(u) => { setPickingFor(u); setShowGuestPicker(false); }}
+          onAddNew={handleAddNewGuest}
+          onClose={() => setShowGuestPicker(false)}
+        />
+      )}
 
       {showDrmModal && (
         <div

@@ -11,6 +11,7 @@ interface QueueSidebarProps {
   onPause: () => void;
   onSkip: () => void;
   onRestart: () => void;
+  onSkipToNearEnd: () => void;
   onEndParty: () => void;
 }
 
@@ -22,7 +23,7 @@ function getVisibleItems(upcoming: QueueItem[]): { items: QueueItem[]; hasEllips
   };
 }
 
-export function QueueSidebar({ queue, nowPlayingId, isPaused, partyCode, joinUrl, onPause, onSkip, onRestart, onEndParty }: QueueSidebarProps) {
+export function QueueSidebar({ queue, nowPlayingId, isPaused, partyCode, joinUrl, onPause, onSkip, onRestart, onSkipToNearEnd, onEndParty }: QueueSidebarProps) {
   const [showEndPartyModal, setShowEndPartyModal] = useState(false);
   const nowPlaying = queue.find((i) => i.id === nowPlayingId) ?? null;
   const upcoming = queue.filter((i) => i.id !== nowPlayingId);
@@ -103,6 +104,27 @@ export function QueueSidebar({ queue, nowPlayingId, isPaused, partyCode, joinUrl
             ⏭ Skip
           </button>
         </div>
+        {import.meta.env.DEV && (
+          <button
+            onClick={onSkipToNearEnd}
+            disabled={!hasNowPlaying}
+            style={{
+              marginTop: '6px',
+              width: '100%',
+              padding: '5px 4px',
+              background: 'transparent',
+              color: !hasNowPlaying ? '#333' : '#444',
+              border: '1px dashed #2a2a2a',
+              borderRadius: '6px',
+              fontSize: '10px',
+              fontWeight: 600,
+              cursor: !hasNowPlaying ? 'not-allowed' : 'pointer',
+              letterSpacing: '0.03em',
+            }}
+          >
+            ⏩ Skip to −10s (dev)
+          </button>
+        )}
       </div>
 
       {/* Now Playing */}

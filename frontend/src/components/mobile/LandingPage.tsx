@@ -92,7 +92,7 @@ export function LandingPage() {
           <h1 style={{ fontSize: '32px', fontWeight: 800, margin: '0 0 8px', letterSpacing: '-0.02em' }}>
             NextUp Karaoke
           </h1>
-          <p style={{ color: '#eee', margin: 0, fontSize: '16px' }}>
+          <p style={{ color: '#ddd', margin: 0, fontSize: '16px' }}>
             YouTube karaoke queue for parties
           </p>
         </div>

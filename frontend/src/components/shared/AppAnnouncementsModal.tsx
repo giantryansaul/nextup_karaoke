@@ -1,18 +1,29 @@
 import { useState } from 'react';
 
 interface AppAnnouncement {
+  version: string;
   date: string;
   items: string[];
 }
 
 const APP_ANNOUNCEMENTS: AppAnnouncement[] = [
   {
+    version: '0.1.2',
+    date: 'June 20, 2026',
+    items: [
+      'YouTube "recommended videos" overlay is now suppressed — the display automatically advances to the next song a few seconds before the current one ends.',
+      'Add a song for someone else — tap "Add for someone else" on the search page to queue a song under another party member\'s name.',
+    ],
+  },
+  {
+    version: '0.1.1',
     date: 'June 20, 2026',
     items: [
       'Added Restart button to remote controls — restart the current track from the beginning on both the display and mobile.',
     ],
   },
   {
+    version: '0.1.0',
     date: 'May 16, 2026',
     items: [
       'NextUp Karaoke launched! Host a party, add YouTube karaoke videos to the queue, and let everyone control the show from their phone.',
@@ -90,7 +101,7 @@ export function AppAnnouncementsModal() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
               {APP_ANNOUNCEMENTS.map((announcement) => (
-                <div key={announcement.date}>
+                <div key={announcement.version}>
                   <p style={{
                     margin: '0 0 10px',
                     fontSize: '11px',
@@ -99,7 +110,7 @@ export function AppAnnouncementsModal() {
                     textTransform: 'uppercase',
                     letterSpacing: '0.08em',
                   }}>
-                    {announcement.date}
+                    v{announcement.version} · {announcement.date}
                   </p>
                   <ul style={{ margin: 0, padding: '0 0 0 16px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     {announcement.items.map((item, i) => (
