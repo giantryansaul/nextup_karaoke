@@ -1,9 +1,10 @@
 import { NavLink } from 'react-router-dom';
 
 const tabs = [
-  { to: '/search', label: 'Search', icon: '🔍' },
-  { to: '/queue',  label: 'Queue',  icon: '🎵' },
-  { to: '/user',   label: 'Profile', icon: '👤' },
+  { to: '/search',    label: 'Search',    icon: '🔍' },
+  { to: '/favorites', label: 'Favorites', icon: '⭐' },
+  { to: '/queue',     label: 'Queue',     icon: '🎵' },
+  { to: '/user',      label: 'Profile',   icon: '👤' },
 ];
 
 export function NavBar() {

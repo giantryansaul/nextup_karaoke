@@ -3,12 +3,14 @@ import { useCallback } from 'react';
 import type { ReactNode } from 'react';
 import { UserProvider, useUser } from './context/UserContext';
 import { QueueProvider, useQueue } from './context/QueueContext';
+import { FavoritesProvider } from './context/FavoritesContext';
 import { useWebSocket } from './hooks/useWebSocket';
 import { LandingPage } from './components/mobile/LandingPage';
 import { JoinPage } from './components/mobile/JoinPage';
 import { SearchPage } from './components/mobile/SearchPage';
 import { QueuePage } from './components/mobile/QueuePage';
 import { UserPage } from './components/mobile/UserPage';
+import { FavoritesPage } from './components/mobile/FavoritesPage';
 import { DisplayView } from './components/display/DisplayView';
 import { NavBar } from './components/shared/NavBar';
 
@@ -63,6 +65,16 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/favorites"
+        element={
+          <MobileLayout>
+            <ProtectedRoute>
+              <FavoritesPage />
+            </ProtectedRoute>
+          </MobileLayout>
+        }
+      />
+      <Route
         path="/queue"
         element={
           <MobileLayout>
@@ -90,11 +102,13 @@ function AppRoutes() {
 export default function App() {
   return (
     <UserProvider>
-      <QueueProvider>
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
-      </QueueProvider>
+      <FavoritesProvider>
+        <QueueProvider>
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </QueueProvider>
+      </FavoritesProvider>
     </UserProvider>
   );
 }
