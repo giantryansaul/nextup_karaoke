@@ -19,6 +19,7 @@ interface QueueContextValue {
   removeFromQueue: (itemId: string) => Promise<void>;
   moveQueueItem: (itemId: string, direction: MoveDirection) => Promise<void>;
   advanceQueue: () => Promise<void>;
+  restartTrack: () => Promise<void>;
   setPaused: (paused: boolean) => Promise<void>;
   clearQueue: () => Promise<void>;
   endParty: () => Promise<void>;
@@ -78,6 +79,12 @@ export function QueueProvider({ children }: { children: ReactNode }) {
     if (!res.ok) throw new Error('Failed to advance queue');
   }
 
+  async function restartTrack(): Promise<void> {
+    if (!partyCode) return;
+    const res = await fetch(`${API_BASE}/api/parties/${partyCode}/queue/restart`, { method: 'POST' });
+    if (!res.ok) throw new Error('Failed to restart track');
+  }
+
   async function setPaused(paused: boolean): Promise<void> {
     if (!partyCode) return;
     const res = await fetch(`${API_BASE}/api/parties/${partyCode}/queue/pause`, {
@@ -101,7 +108,7 @@ export function QueueProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <QueueContext.Provider value={{ state, setState, addToQueue, removeFromQueue, moveQueueItem, advanceQueue, setPaused, clearQueue, endParty }}>
+    <QueueContext.Provider value={{ state, setState, addToQueue, removeFromQueue, moveQueueItem, advanceQueue, restartTrack, setPaused, clearQueue, endParty }}>
       {children}
     </QueueContext.Provider>
   );

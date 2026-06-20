@@ -160,6 +160,13 @@ async def advance_queue(code: str) -> SessionState:
     return state
 
 
+async def restart_track(code: str) -> SessionState:
+    state = _parties[code]
+    state.restart_signal += 1
+    await _persist(code)
+    return state
+
+
 async def set_paused(code: str, paused: bool) -> SessionState:
     state = _parties[code]
     state.is_paused = paused

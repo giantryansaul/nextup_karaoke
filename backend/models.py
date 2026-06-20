@@ -36,6 +36,7 @@ class SessionState(BaseModel):
     queue: list[QueueItem] = Field(default_factory=list)
     now_playing: Optional[str] = None
     is_paused: bool = False
+    restart_signal: int = 0
     users: dict[str, User] = Field(default_factory=dict)
 
 

@@ -31,6 +31,16 @@ async def advance_queue(code: str) -> SessionState:
     return updated
 
 
+@router.post("/parties/{code}/queue/restart", response_model=SessionState)
+async def restart_track(code: str) -> SessionState:
+    code = code.upper()
+    if not await store.party_exists(code):
+        raise HTTPException(status_code=404, detail="Party not found")
+    updated = await store.restart_track(code)
+    await manager.broadcast(code, updated)
+    return updated
+
+
 @router.post("/parties/{code}/queue/pause", response_model=SessionState)
 async def set_paused(code: str, body: SetPausedRequest) -> SessionState:
     code = code.upper()

@@ -29,10 +29,11 @@ loadYouTubeApi();
 interface YouTubePlayerProps {
   nowPlayingVideoId: string | null;
   isPaused: boolean;
+  restartSignal: number;
   onVideoEnded: () => void;
 }
 
-export function YouTubePlayer({ nowPlayingVideoId, isPaused, onVideoEnded }: YouTubePlayerProps) {
+export function YouTubePlayer({ nowPlayingVideoId, isPaused, restartSignal, onVideoEnded }: YouTubePlayerProps) {
   const playerRef = useRef<YT.Player | null>(null);
   const onEndedRef = useRef(onVideoEnded);
   const prevIsPausedRef = useRef(false);
@@ -115,6 +116,14 @@ export function YouTubePlayer({ nowPlayingVideoId, isPaused, onVideoEnded }: You
       playerRef.current.playVideo();
     }
   }, [isPaused, started]);
+
+  // Seek to start when restart is requested; isPaused is intentionally read
+  // at call time only — adding it to deps would cause spurious re-seeks on pause toggle
+  useEffect(() => {
+    if (!playerRef.current || !started || restartSignal === 0) return;
+    playerRef.current.seekTo(0, true);
+    if (!isPaused) playerRef.current.playVideo();
+  }, [restartSignal, started]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleStart = () => {
     setShowOverlay(false);

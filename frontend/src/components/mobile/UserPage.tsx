@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useUser } from '../../context/UserContext';
 import { UserProfileForm } from '../shared/UserProfileForm';
+import { AppAnnouncementsModal } from '../shared/AppAnnouncementsModal';
 
 const API_BASE = import.meta.env.VITE_API_URL ?? '';
 
@@ -49,22 +50,31 @@ export function UserPage() {
         onSubmit={handleUpdate}
       />
 
-      <p style={{
+      <div style={{
         position: 'fixed',
         bottom: '62px',
         left: 0,
         right: 0,
-        margin: 0,
-        textAlign: 'center',
-        fontSize: '11px',
-        fontWeight: 700,
-        color: '#333',
-        letterSpacing: '0.08em',
-        textTransform: 'uppercase',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '8px',
         pointerEvents: 'none',
       }}>
-        NextUp Karaoke
-      </p>
+        <p style={{
+          margin: 0,
+          fontSize: '11px',
+          fontWeight: 700,
+          color: '#333',
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+        }}>
+          NextUp Karaoke
+        </p>
+        <span style={{ pointerEvents: 'auto' }}>
+          <AppAnnouncementsModal />
+        </span>
+      </div>
     </div>
   );
 }

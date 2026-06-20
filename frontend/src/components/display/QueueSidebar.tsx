@@ -10,6 +10,7 @@ interface QueueSidebarProps {
   joinUrl: string;
   onPause: () => void;
   onSkip: () => void;
+  onRestart: () => void;
   onEndParty: () => void;
 }
 
@@ -21,7 +22,7 @@ function getVisibleItems(upcoming: QueueItem[]): { items: QueueItem[]; hasEllips
   };
 }
 
-export function QueueSidebar({ queue, nowPlayingId, isPaused, partyCode, joinUrl, onPause, onSkip, onEndParty }: QueueSidebarProps) {
+export function QueueSidebar({ queue, nowPlayingId, isPaused, partyCode, joinUrl, onPause, onSkip, onRestart, onEndParty }: QueueSidebarProps) {
   const [showEndPartyModal, setShowEndPartyModal] = useState(false);
   const nowPlaying = queue.find((i) => i.id === nowPlayingId) ?? null;
   const upcoming = queue.filter((i) => i.id !== nowPlayingId);
@@ -66,6 +67,23 @@ export function QueueSidebar({ queue, nowPlayingId, isPaused, partyCode, joinUrl
             }}
           >
             {isPaused ? '▶ Continue' : '⏸ Pause'}
+          </button>
+          <button
+            onClick={onRestart}
+            disabled={!hasNowPlaying}
+            style={{
+              flex: 1,
+              padding: '8px 4px',
+              background: !hasNowPlaying ? '#111' : '#1a1a0a',
+              color: !hasNowPlaying ? '#333' : '#facc15',
+              border: `1px solid ${!hasNowPlaying ? '#1a1a1a' : '#3a3a0a'}`,
+              borderRadius: '6px',
+              fontSize: '11px',
+              fontWeight: 700,
+              cursor: !hasNowPlaying ? 'not-allowed' : 'pointer',
+            }}
+          >
+            ⏮ Restart
           </button>
           <button
             onClick={onSkip}

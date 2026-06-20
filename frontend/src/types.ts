@@ -19,6 +19,7 @@ export interface SessionState {
   queue: QueueItem[];
   now_playing: string | null;
   is_paused: boolean;
+  restart_signal: number;
   users: Record<string, User>;
 }
 

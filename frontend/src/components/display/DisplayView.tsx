@@ -23,6 +23,7 @@ export function DisplayView() {
   const queue = sessionState?.queue ?? [];
   const nowPlayingId = sessionState?.now_playing ?? null;
   const isPaused = sessionState?.is_paused ?? false;
+  const restartSignal = sessionState?.restart_signal ?? 0;
   const nowPlayingItem = queue.find((i) => i.id === nowPlayingId) ?? null;
 
   const handleVideoEnded = useCallback(async () => {
@@ -44,6 +45,12 @@ export function DisplayView() {
   const handleSkip = useCallback(async () => {
     try {
       await fetch(`${API_BASE}/api/parties/${code}/queue/advance`, { method: 'POST' });
+    } catch { /* ignore */ }
+  }, [code]);
+
+  const handleRestart = useCallback(async () => {
+    try {
+      await fetch(`${API_BASE}/api/parties/${code}/queue/restart`, { method: 'POST' });
     } catch { /* ignore */ }
   }, [code]);
 
@@ -69,6 +76,7 @@ export function DisplayView() {
         <YouTubePlayer
           nowPlayingVideoId={nowPlayingItem?.video_id ?? null}
           isPaused={isPaused}
+          restartSignal={restartSignal}
           onVideoEnded={handleVideoEnded}
         />
       </div>
@@ -83,6 +91,7 @@ export function DisplayView() {
           joinUrl={joinUrl}
           onPause={handlePause}
           onSkip={handleSkip}
+          onRestart={handleRestart}
           onEndParty={handleEndParty}
         />
       </div>

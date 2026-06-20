@@ -3,7 +3,7 @@ import { useQueue } from '../../context/QueueContext';
 import type { MoveDirection, QueueItem } from '../../types';
 
 export function QueuePage() {
-  const { state, removeFromQueue, moveQueueItem, setPaused, advanceQueue, clearQueue, endParty } = useQueue();
+  const { state, removeFromQueue, moveQueueItem, setPaused, advanceQueue, restartTrack, clearQueue, endParty } = useQueue();
   const [showClearModal, setShowClearModal] = useState(false);
   const [showEndPartyModal, setShowEndPartyModal] = useState(false);
 
@@ -60,6 +60,27 @@ export function QueuePage() {
             }}
           >
             {is_paused ? '▶ Continue' : '⏸ Pause'}
+          </button>
+          <button
+            onClick={() => restartTrack()}
+            disabled={!hasNowPlaying}
+            style={{
+              flex: 1,
+              padding: '12px',
+              background: !hasNowPlaying ? '#111' : '#1a1a0a',
+              color: !hasNowPlaying ? '#333' : '#facc15',
+              border: `1px solid ${!hasNowPlaying ? '#222' : '#3a3a0a'}`,
+              borderRadius: '8px',
+              fontSize: '15px',
+              fontWeight: 700,
+              cursor: !hasNowPlaying ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+            }}
+          >
+            ⏮ Restart
           </button>
           <button
             onClick={() => advanceQueue()}
