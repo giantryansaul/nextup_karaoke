@@ -7,7 +7,7 @@ interface AppAnnouncement {
 
 const APP_ANNOUNCEMENTS: AppAnnouncement[] = [
   {
-    date: 'June 13, 2026',
+    date: 'June 20, 2026',
     items: [
       'Added Restart button to remote controls — restart the current track from the beginning on both the display and mobile.',
     ],
@@ -32,7 +32,7 @@ export function AppAnnouncementsModal() {
           border: 'none',
           padding: 0,
           cursor: 'pointer',
-          color: '#555',
+          color: '#ccc',
           fontSize: '13px',
           fontWeight: 500,
           textDecoration: 'underline',
@@ -77,7 +77,7 @@ export function AppAnnouncementsModal() {
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: '#666',
+                  color: '#999',
                   fontSize: '20px',
                   cursor: 'pointer',
                   padding: '4px 8px',
@@ -103,7 +103,7 @@ export function AppAnnouncementsModal() {
                   </p>
                   <ul style={{ margin: 0, padding: '0 0 0 16px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     {announcement.items.map((item, i) => (
-                      <li key={i} style={{ fontSize: '14px', color: '#ccc', lineHeight: 1.5 }}>
+                      <li key={i} style={{ fontSize: '14px', color: '#ddd', lineHeight: 1.5 }}>
                         {item}
                       </li>
                     ))}

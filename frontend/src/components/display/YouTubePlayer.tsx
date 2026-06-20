@@ -176,7 +176,7 @@ export function YouTubePlayer({ nowPlayingVideoId, isPaused, restartSignal, onVi
           <h1 style={{ fontSize: '48px', fontWeight: 900, margin: '0 0 8px', letterSpacing: '-0.02em' }}>
             NextUp Karaoke
           </h1>
-          <p style={{ color: '#888', fontSize: '18px', margin: '0 0 40px' }}>
+          <p style={{ color: '#ddd', fontSize: '18px', margin: '0 0 40px' }}>
             Party Display
           </p>
           <button
@@ -195,7 +195,7 @@ export function YouTubePlayer({ nowPlayingVideoId, isPaused, restartSignal, onVi
           >
             Start Party 🎉
           </button>
-          <p style={{ color: '#444', fontSize: '13px', marginTop: '16px' }}>
+          <p style={{ color: '#ddd', fontSize: '13px', marginTop: '16px' }}>
             Click once to enable autoplay
           </p>
         </div>

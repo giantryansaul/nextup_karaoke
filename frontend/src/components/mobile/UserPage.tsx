@@ -52,7 +52,7 @@ export function UserPage() {
 
       <div style={{
         position: 'fixed',
-        bottom: '62px',
+        bottom: '100px',
         left: 0,
         right: 0,
         display: 'flex',
