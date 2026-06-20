@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQueue } from '../../context/QueueContext';
+import { useFavorites } from '../../context/FavoritesContext';
 import type { MoveDirection, QueueItem } from '../../types';
 
 export function QueuePage() {
@@ -304,6 +305,9 @@ interface QueueRowProps {
 }
 
 function QueueRow({ item, isPlaying, isFirst, isLast, onMove, onDelete }: QueueRowProps) {
+  const { isFavorited, toggleFavorite } = useFavorites();
+  const favorited = isFavorited(item.video_id);
+
   return (
     <div style={{
       padding: '12px 16px',
@@ -349,6 +353,17 @@ function QueueRow({ item, isPlaying, isFirst, isLast, onMove, onDelete }: QueueR
         <ActionButton label="▲ Up"     onClick={() => onMove('up')}     disabled={isFirst} />
         <ActionButton label="▼ Down"   onClick={() => onMove('down')}   disabled={isLast}  />
         <ActionButton label="⤓ Bottom" onClick={() => onMove('bottom')} disabled={isLast}  />
+        <ActionButton
+          label={favorited ? '★ Favorited' : '☆ Favorite'}
+          onClick={() => toggleFavorite({
+            video_id: item.video_id,
+            title: item.title,
+            channel: item.channel,
+            thumbnail: item.thumbnail,
+            duration: '',
+          })}
+          active={favorited}
+        />
         <ActionButton label="✕ Remove" onClick={onDelete} danger />
       </div>
     </div>
@@ -360,11 +375,13 @@ function ActionButton({
   onClick,
   disabled = false,
   danger = false,
+  active = false,
 }: {
   label: string;
   onClick: () => void;
   disabled?: boolean;
   danger?: boolean;
+  active?: boolean;
 }) {
   return (
     <button
@@ -374,9 +391,9 @@ function ActionButton({
         padding: '5px 10px',
         fontSize: '12px',
         fontWeight: 600,
-        background: disabled ? '#111' : danger ? '#2a0a0a' : '#1a1a1a',
-        color: disabled ? '#333' : danger ? '#ff6b6b' : '#ccc',
-        border: `1px solid ${disabled ? '#222' : danger ? '#5a1a1a' : '#333'}`,
+        background: disabled ? '#111' : danger ? '#2a0a0a' : active ? '#2a2a00' : '#1a1a1a',
+        color: disabled ? '#333' : danger ? '#ff6b6b' : active ? '#FFD700' : '#ccc',
+        border: `1px solid ${disabled ? '#222' : danger ? '#5a1a1a' : active ? '#5a5a00' : '#333'}`,
         borderRadius: '5px',
         cursor: disabled ? 'not-allowed' : 'pointer',
       }}
