@@ -12,12 +12,6 @@ const APP_ANNOUNCEMENTS: AppAnnouncement[] = [
     date: 'June 20, 2026',
     items: [
       'Favorites — star any song from Search or Queue to save it. Find your saved songs in the new Favorites tab.',
-    ],
-  },
-  {
-    version: '0.1.2',
-    date: 'June 20, 2026',
-    items: [
       'YouTube "recommended videos" overlay is now suppressed — the display automatically advances to the next song a few seconds before the current one ends.',
       'Add a song for someone else — tap "Add for someone else" on the search page to queue a song under another party member\'s name.',
     ],
