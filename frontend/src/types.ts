@@ -20,6 +20,7 @@ export interface SessionState {
   now_playing: string | null;
   is_paused: boolean;
   restart_signal: number;
+  playback_rate: number;
   users: Record<string, User>;
 }
 

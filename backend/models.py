@@ -30,6 +30,9 @@ class QueueItem(BaseModel):
     added_by_color: str
 
 
+PLAYBACK_RATES = (0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0)
+
+
 class SessionState(BaseModel):
     model_config = ConfigDict(frozen=False)
 
@@ -37,6 +40,7 @@ class SessionState(BaseModel):
     now_playing: Optional[str] = None
     is_paused: bool = False
     restart_signal: int = 0
+    playback_rate: float = 1.0
     users: dict[str, User] = Field(default_factory=dict)
 
 
@@ -66,6 +70,10 @@ class MoveQueueItemRequest(BaseModel):
 
 class SetPausedRequest(BaseModel):
     paused: bool
+
+
+class SetPlaybackRateRequest(BaseModel):
+    rate: float
 
 
 class PartyCreateResponse(BaseModel):

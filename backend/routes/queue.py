@@ -4,7 +4,14 @@ from fastapi import APIRouter, HTTPException
 from fastapi import Response
 
 import session as store
-from models import AddQueueItemRequest, MoveQueueItemRequest, QueueItem, SessionState, SetPausedRequest
+from models import (
+    AddQueueItemRequest,
+    MoveQueueItemRequest,
+    QueueItem,
+    SessionState,
+    SetPausedRequest,
+    SetPlaybackRateRequest,
+)
 from ws_manager import manager
 
 router = APIRouter(tags=["queue"])
@@ -47,6 +54,19 @@ async def set_paused(code: str, body: SetPausedRequest) -> SessionState:
     if not await store.party_exists(code):
         raise HTTPException(status_code=404, detail="Party not found")
     updated = await store.set_paused(code, body.paused)
+    await manager.broadcast(code, updated)
+    return updated
+
+
+@router.post("/parties/{code}/queue/speed", response_model=SessionState)
+async def set_playback_rate(code: str, body: SetPlaybackRateRequest) -> SessionState:
+    code = code.upper()
+    if not await store.party_exists(code):
+        raise HTTPException(status_code=404, detail="Party not found")
+    try:
+        updated = await store.set_playback_rate(code, body.rate)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     await manager.broadcast(code, updated)
     return updated
 

@@ -8,6 +8,13 @@ interface AppAnnouncement {
 
 const APP_ANNOUNCEMENTS: AppAnnouncement[] = [
   {
+    version: '0.3.0',
+    date: 'July 13, 2026',
+    items: [
+      'Playback speed — speed up or slow down the current song from Remote Control on your phone or the display sidebar (0.25×–2×). The screen shows the current rate, and speed resets to normal when the next song starts.',
+    ],
+  },
+  {
     version: '0.2.0',
     date: 'June 20, 2026',
     items: [

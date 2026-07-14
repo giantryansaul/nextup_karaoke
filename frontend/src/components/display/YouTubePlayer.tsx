@@ -1,7 +1,9 @@
 /// <reference types="youtube" />
 import { useEffect, useRef, useState } from 'react';
+import { formatPlaybackRate } from '../../playbackRates';
 
 const EARLY_END_THRESHOLD = 5;
+const RATE_FLASH_MS = 1800;
 
 declare global {
   interface Window {
@@ -33,18 +35,29 @@ interface YouTubePlayerProps {
   isPaused: boolean;
   restartSignal: number;
   skipToNearEndSignal: number;
+  playbackRate: number;
   onVideoEnded: () => void;
 }
 
-export function YouTubePlayer({ nowPlayingVideoId, isPaused, restartSignal, skipToNearEndSignal, onVideoEnded }: YouTubePlayerProps) {
+export function YouTubePlayer({
+  nowPlayingVideoId,
+  isPaused,
+  restartSignal,
+  skipToNearEndSignal,
+  playbackRate,
+  onVideoEnded,
+}: YouTubePlayerProps) {
   const playerRef = useRef<YT.Player | null>(null);
   const onEndedRef = useRef(onVideoEnded);
   const prevIsPausedRef = useRef(false);
+  const prevPlaybackRateRef = useRef<number | null>(null);
   const errorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const earlyEndIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const flashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [showOverlay, setShowOverlay] = useState(true);
   const [started, setStarted] = useState(false);
   const [embedError, setEmbedError] = useState(false);
+  const [rateFlash, setRateFlash] = useState<{ label: string; faster: boolean } | null>(null);
 
   // Always keep the ref current without recreating the player
   onEndedRef.current = onVideoEnded;
@@ -107,6 +120,7 @@ export function YouTubePlayer({ nowPlayingVideoId, isPaused, restartSignal, skip
       mounted = false;
       if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
       if (earlyEndIntervalRef.current) clearInterval(earlyEndIntervalRef.current);
+      if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
       playerRef.current?.destroy();
       playerRef.current = null;
     };
@@ -143,6 +157,46 @@ export function YouTubePlayer({ nowPlayingVideoId, isPaused, restartSignal, skip
     }
   }, [isPaused, started]);
 
+  // Apply synced playback rate; flash overlay when the rate changes
+  useEffect(() => {
+    if (!playerRef.current || !started) return;
+    try {
+      playerRef.current.setPlaybackRate(playbackRate);
+    } catch {
+      /* player may not be ready yet */
+    }
+
+    const prev = prevPlaybackRateRef.current;
+    prevPlaybackRateRef.current = playbackRate;
+    if (prev === null || prev === playbackRate) return;
+
+    if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
+    setRateFlash({
+      label: formatPlaybackRate(playbackRate),
+      faster: playbackRate > prev,
+    });
+    flashTimerRef.current = setTimeout(() => {
+      setRateFlash(null);
+      flashTimerRef.current = null;
+    }, RATE_FLASH_MS);
+  }, [playbackRate, started]);
+
+  // Re-apply rate after a new video loads (YouTube resets to 1× on loadVideoById)
+  useEffect(() => {
+    if (!playerRef.current || !started || !nowPlayingVideoId) return;
+    const player = playerRef.current;
+    const apply = () => {
+      try {
+        player.setPlaybackRate(playbackRate);
+      } catch {
+        /* ignore */
+      }
+    };
+    // loadVideoById is async; nudge rate shortly after load
+    const t = setTimeout(apply, 400);
+    return () => clearTimeout(t);
+  }, [nowPlayingVideoId, playbackRate, started]);
+
   // Seek to start when restart is requested; isPaused is intentionally read
   // at call time only — adding it to deps would cause spurious re-seeks on pause toggle
   useEffect(() => {
@@ -178,6 +232,52 @@ export function YouTubePlayer({ nowPlayingVideoId, isPaused, restartSignal, skip
           <p style={{ fontSize: '64px', margin: '0 0 16px' }}>🎤</p>
           <p style={{ color: '#fff', fontSize: '24px', fontWeight: 700 }}>Waiting for songs...</p>
           <p style={{ color: '#666', fontSize: '16px' }}>Add songs from your phone to get started</p>
+        </div>
+      )}
+
+      {playbackRate !== 1 && started && nowPlayingVideoId && !showOverlay && (
+        <div style={{
+          position: 'absolute',
+          top: 16,
+          left: 16,
+          zIndex: 4,
+          padding: '8px 14px',
+          background: 'rgba(0,0,0,0.65)',
+          border: '1px solid rgba(255,255,255,0.18)',
+          borderRadius: 8,
+          color: '#fff',
+          fontSize: 18,
+          fontWeight: 800,
+          letterSpacing: '0.02em',
+          pointerEvents: 'none',
+        }}>
+          {formatPlaybackRate(playbackRate)}
+        </div>
+      )}
+
+      {rateFlash && started && !showOverlay && (
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 4,
+          pointerEvents: 'none',
+        }}>
+          <div style={{
+            padding: '20px 36px',
+            background: 'rgba(0,0,0,0.72)',
+            border: '1px solid rgba(255,255,255,0.2)',
+            borderRadius: 14,
+            color: '#fff',
+            fontSize: 42,
+            fontWeight: 900,
+            letterSpacing: '-0.02em',
+            animation: 'rateFlashIn 0.2s ease-out',
+          }}>
+            {rateFlash.faster ? '▲' : '▼'} {rateFlash.label}
+          </div>
         </div>
       )}
 
@@ -232,6 +332,13 @@ export function YouTubePlayer({ nowPlayingVideoId, isPaused, restartSignal, skip
           </p>
         </div>
       )}
+
+      <style>{`
+        @keyframes rateFlashIn {
+          from { opacity: 0; transform: scale(0.92); }
+          to { opacity: 1; transform: scale(1); }
+        }
+      `}</style>
     </div>
   );
 }

@@ -1,16 +1,19 @@
 import { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import type { QueueItem } from '../../types';
+import { canStepPlaybackRate, formatPlaybackRate, stepPlaybackRate } from '../../playbackRates';
 
 interface QueueSidebarProps {
   queue: QueueItem[];
   nowPlayingId: string | null;
   isPaused: boolean;
+  playbackRate: number;
   partyCode: string;
   joinUrl: string;
   onPause: () => void;
   onSkip: () => void;
   onRestart: () => void;
+  onPlaybackRateChange: (rate: number) => void;
   onSkipToNearEnd: () => void;
   onEndParty: () => void;
 }
@@ -23,12 +26,28 @@ function getVisibleItems(upcoming: QueueItem[]): { items: QueueItem[]; hasEllips
   };
 }
 
-export function QueueSidebar({ queue, nowPlayingId, isPaused, partyCode, joinUrl, onPause, onSkip, onRestart, onSkipToNearEnd, onEndParty }: QueueSidebarProps) {
+export function QueueSidebar({
+  queue,
+  nowPlayingId,
+  isPaused,
+  playbackRate,
+  partyCode,
+  joinUrl,
+  onPause,
+  onSkip,
+  onRestart,
+  onPlaybackRateChange,
+  onSkipToNearEnd,
+  onEndParty,
+}: QueueSidebarProps) {
   const [showEndPartyModal, setShowEndPartyModal] = useState(false);
   const nowPlaying = queue.find((i) => i.id === nowPlayingId) ?? null;
   const upcoming = queue.filter((i) => i.id !== nowPlayingId);
   const { items, hasEllipsis } = getVisibleItems(upcoming);
   const hasNowPlaying = nowPlayingId !== null;
+  const canSlow = hasNowPlaying && canStepPlaybackRate(playbackRate, -1);
+  const canFast = hasNowPlaying && canStepPlaybackRate(playbackRate, 1);
+  const rateHighlight = playbackRate !== 1;
 
   const handleEndPartyConfirm = () => {
     setShowEndPartyModal(false);
@@ -102,6 +121,58 @@ export function QueueSidebar({ queue, nowPlayingId, isPaused, partyCode, joinUrl
             }}
           >
             ⏭ Skip
+          </button>
+        </div>
+        <div style={{ display: 'flex', gap: '6px', marginTop: '6px' }}>
+          <button
+            onClick={() => onPlaybackRateChange(stepPlaybackRate(playbackRate, -1))}
+            disabled={!canSlow}
+            style={{
+              flex: 1,
+              padding: '8px 4px',
+              background: !canSlow ? '#111' : '#1a1218',
+              color: !canSlow ? '#333' : '#f9a8d4',
+              border: `1px solid ${!canSlow ? '#1a1a1a' : '#3a2a35'}`,
+              borderRadius: '6px',
+              fontSize: '14px',
+              fontWeight: 700,
+              cursor: !canSlow ? 'not-allowed' : 'pointer',
+            }}
+          >
+            −
+          </button>
+          <div
+            style={{
+              flex: 1.4,
+              padding: '8px 4px',
+              background: !hasNowPlaying ? '#111' : rateHighlight ? '#1a1520' : '#141414',
+              color: !hasNowPlaying ? '#333' : rateHighlight ? '#f0abfc' : '#aaa',
+              border: `1px solid ${!hasNowPlaying ? '#1a1a1a' : rateHighlight ? '#4a2a55' : '#2a2a2a'}`,
+              borderRadius: '6px',
+              fontSize: '12px',
+              fontWeight: 800,
+              textAlign: 'center',
+              letterSpacing: '0.02em',
+            }}
+          >
+            {formatPlaybackRate(playbackRate)}
+          </div>
+          <button
+            onClick={() => onPlaybackRateChange(stepPlaybackRate(playbackRate, 1))}
+            disabled={!canFast}
+            style={{
+              flex: 1,
+              padding: '8px 4px',
+              background: !canFast ? '#111' : '#1a1218',
+              color: !canFast ? '#333' : '#f9a8d4',
+              border: `1px solid ${!canFast ? '#1a1a1a' : '#3a2a35'}`,
+              borderRadius: '6px',
+              fontSize: '14px',
+              fontWeight: 700,
+              cursor: !canFast ? 'not-allowed' : 'pointer',
+            }}
+          >
+            +
           </button>
         </div>
         {import.meta.env.DEV && (

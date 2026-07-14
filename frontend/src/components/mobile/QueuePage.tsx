@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { useQueue } from '../../context/QueueContext';
 import { useFavorites } from '../../context/FavoritesContext';
 import type { MoveDirection, QueueItem } from '../../types';
+import { canStepPlaybackRate, formatPlaybackRate, stepPlaybackRate } from '../../playbackRates';
 
 export function QueuePage() {
-  const { state, removeFromQueue, moveQueueItem, setPaused, advanceQueue, restartTrack, clearQueue, endParty } = useQueue();
+  const { state, removeFromQueue, moveQueueItem, setPaused, advanceQueue, restartTrack, setPlaybackRate, clearQueue, endParty } = useQueue();
   const [showClearModal, setShowClearModal] = useState(false);
   const [showEndPartyModal, setShowEndPartyModal] = useState(false);
 
@@ -12,8 +13,11 @@ export function QueuePage() {
     return <p style={{ textAlign: 'center', color: '#555', padding: '48px 16px' }}>Loading...</p>;
   }
 
-  const { queue, now_playing, is_paused } = state;
+  const { queue, now_playing, is_paused, playback_rate = 1 } = state;
   const hasNowPlaying = now_playing !== null;
+  const canSlow = hasNowPlaying && canStepPlaybackRate(playback_rate, -1);
+  const canFast = hasNowPlaying && canStepPlaybackRate(playback_rate, 1);
+  const rateHighlight = playback_rate !== 1;
 
   const handleClearConfirm = async () => {
     await clearQueue();
@@ -103,6 +107,60 @@ export function QueuePage() {
             }}
           >
             ⏭ Skip
+          </button>
+        </div>
+        <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+          <button
+            onClick={() => setPlaybackRate(stepPlaybackRate(playback_rate, -1))}
+            disabled={!canSlow}
+            style={{
+              flex: 1,
+              padding: '12px',
+              background: !canSlow ? '#111' : '#1a1218',
+              color: !canSlow ? '#333' : '#f9a8d4',
+              border: `1px solid ${!canSlow ? '#222' : '#3a2a35'}`,
+              borderRadius: '8px',
+              fontSize: '18px',
+              fontWeight: 700,
+              cursor: !canSlow ? 'not-allowed' : 'pointer',
+            }}
+          >
+            −
+          </button>
+          <div
+            style={{
+              flex: 1.4,
+              padding: '12px',
+              background: !hasNowPlaying ? '#111' : rateHighlight ? '#1a1520' : '#141414',
+              color: !hasNowPlaying ? '#333' : rateHighlight ? '#f0abfc' : '#aaa',
+              border: `1px solid ${!hasNowPlaying ? '#222' : rateHighlight ? '#4a2a55' : '#333'}`,
+              borderRadius: '8px',
+              fontSize: '15px',
+              fontWeight: 800,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              letterSpacing: '0.02em',
+            }}
+          >
+            {formatPlaybackRate(playback_rate)}
+          </div>
+          <button
+            onClick={() => setPlaybackRate(stepPlaybackRate(playback_rate, 1))}
+            disabled={!canFast}
+            style={{
+              flex: 1,
+              padding: '12px',
+              background: !canFast ? '#111' : '#1a1218',
+              color: !canFast ? '#333' : '#f9a8d4',
+              border: `1px solid ${!canFast ? '#222' : '#3a2a35'}`,
+              borderRadius: '8px',
+              fontSize: '18px',
+              fontWeight: 700,
+              cursor: !canFast ? 'not-allowed' : 'pointer',
+            }}
+          >
+            +
           </button>
         </div>
       </div>

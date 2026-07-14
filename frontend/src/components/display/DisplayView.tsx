@@ -25,6 +25,7 @@ export function DisplayView() {
   const nowPlayingId = sessionState?.now_playing ?? null;
   const isPaused = sessionState?.is_paused ?? false;
   const restartSignal = sessionState?.restart_signal ?? 0;
+  const playbackRate = sessionState?.playback_rate ?? 1;
   const nowPlayingItem = queue.find((i) => i.id === nowPlayingId) ?? null;
 
   const handleVideoEnded = useCallback(async () => {
@@ -55,6 +56,16 @@ export function DisplayView() {
     } catch { /* ignore */ }
   }, [code]);
 
+  const handlePlaybackRateChange = useCallback(async (rate: number) => {
+    try {
+      await fetch(`${API_BASE}/api/parties/${code}/queue/speed`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rate }),
+      });
+    } catch { /* ignore */ }
+  }, [code]);
+
   const handleEndParty = useCallback(async () => {
     try {
       await fetch(`${API_BASE}/api/parties/${code}`, { method: 'DELETE' });
@@ -79,6 +90,7 @@ export function DisplayView() {
           isPaused={isPaused}
           restartSignal={restartSignal}
           skipToNearEndSignal={skipToNearEndSignal}
+          playbackRate={playbackRate}
           onVideoEnded={handleVideoEnded}
         />
       </div>
@@ -89,11 +101,13 @@ export function DisplayView() {
           queue={queue}
           nowPlayingId={nowPlayingId}
           isPaused={isPaused}
+          playbackRate={playbackRate}
           partyCode={code}
           joinUrl={joinUrl}
           onPause={handlePause}
           onSkip={handleSkip}
           onRestart={handleRestart}
+          onPlaybackRateChange={handlePlaybackRateChange}
           onSkipToNearEnd={() => setSkipToNearEndSignal((s) => s + 1)}
           onEndParty={handleEndParty}
         />

@@ -22,6 +22,7 @@ interface QueueContextValue {
   advanceQueue: () => Promise<void>;
   restartTrack: () => Promise<void>;
   setPaused: (paused: boolean) => Promise<void>;
+  setPlaybackRate: (rate: number) => Promise<void>;
   clearQueue: () => Promise<void>;
   endParty: () => Promise<void>;
 }
@@ -107,6 +108,16 @@ export function QueueProvider({ children }: { children: ReactNode }) {
     if (!res.ok) throw new Error('Failed to set pause state');
   }
 
+  async function setPlaybackRate(rate: number): Promise<void> {
+    if (!partyCode) return;
+    const res = await fetch(`${API_BASE}/api/parties/${partyCode}/queue/speed`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rate }),
+    });
+    if (!res.ok) throw new Error('Failed to set playback rate');
+  }
+
   async function clearQueue(): Promise<void> {
     if (!partyCode) return;
     const res = await fetch(`${API_BASE}/api/parties/${partyCode}/queue`, { method: 'DELETE' });
@@ -120,7 +131,7 @@ export function QueueProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <QueueContext.Provider value={{ state, setState, addToQueue, registerUser, removeFromQueue, moveQueueItem, advanceQueue, restartTrack, setPaused, clearQueue, endParty }}>
+    <QueueContext.Provider value={{ state, setState, addToQueue, registerUser, removeFromQueue, moveQueueItem, advanceQueue, restartTrack, setPaused, setPlaybackRate, clearQueue, endParty }}>
       {children}
     </QueueContext.Provider>
   );

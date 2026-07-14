@@ -5,7 +5,7 @@ from typing import Optional
 
 import redis.asyncio as aioredis
 
-from models import QueueItem, SessionState, User
+from models import PLAYBACK_RATES, QueueItem, SessionState, User
 
 PARTY_TTL = 1200  # 20 minutes
 
@@ -15,6 +15,14 @@ _redis: Optional[aioredis.Redis] = None
 
 def _party_key(code: str) -> str:
     return f"nextup:party:{code}"
+
+
+def _set_now_playing(state: SessionState, item_id: Optional[str]) -> None:
+    """Update now_playing and reset playback speed whenever the track changes."""
+    if state.now_playing == item_id:
+        return
+    state.now_playing = item_id
+    state.playback_rate = 1.0
 
 
 async def init_redis() -> None:
@@ -112,7 +120,7 @@ async def add_queue_item(code: str, item: QueueItem) -> SessionState:
     state = _parties[code]
     state.queue.append(item)
     if state.now_playing is None:
-        state.now_playing = item.id
+        _set_now_playing(state, item.id)
     await _persist(code)
     return state
 
@@ -124,7 +132,7 @@ async def remove_queue_item(code: str, item_id: str) -> bool:
     before = len(state.queue)
     state.queue = [i for i in state.queue if i.id != item_id]
     if state.now_playing == item_id:
-        state.now_playing = state.queue[0].id if state.queue else None
+        _set_now_playing(state, state.queue[0].id if state.queue else None)
     await _persist(code)
     return len(state.queue) < before
 
@@ -145,7 +153,7 @@ async def move_queue_item(code: str, item_id: str, direction: str) -> bool:
         q.insert(0, q.pop(idx))
     elif direction == "bottom":
         q.append(q.pop(idx))
-    state.now_playing = q[0].id if q else None
+    _set_now_playing(state, q[0].id if q else None)
     await _persist(code)
     return True
 
@@ -154,7 +162,7 @@ async def advance_queue(code: str) -> SessionState:
     state = _parties[code]
     if state.now_playing:
         state.queue = [i for i in state.queue if i.id != state.now_playing]
-    state.now_playing = state.queue[0].id if state.queue else None
+    _set_now_playing(state, state.queue[0].id if state.queue else None)
     state.is_paused = False
     await _persist(code)
     return state
@@ -174,10 +182,19 @@ async def set_paused(code: str, paused: bool) -> SessionState:
     return state
 
 
+async def set_playback_rate(code: str, rate: float) -> SessionState:
+    if rate not in PLAYBACK_RATES:
+        raise ValueError("Invalid playback rate")
+    state = _parties[code]
+    state.playback_rate = rate
+    await _persist(code)
+    return state
+
+
 async def clear_queue(code: str) -> SessionState:
     state = _parties[code]
     state.queue = []
-    state.now_playing = None
+    _set_now_playing(state, None)
     state.is_paused = False
     await _persist(code)
     return state
